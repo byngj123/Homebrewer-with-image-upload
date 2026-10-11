@@ -2,6 +2,7 @@
 import dedent                    from 'dedent';
 import WatercolorGen 			 from './snippets/watercolor.gen.js';
 import ImageMaskGen              from './snippets/imageMask.gen.js';
+import ImageUploadGen            from './snippets/imageUpload.gen.js';
 import FooterGen                 from './snippets/footer.gen.js';
 import LicenseGenWotC            from './snippets/licenseWotC.gen.js';
 import LicenseGenGNU             from './snippets/licenseGNU.gen.js';
@@ -641,6 +642,11 @@ export default [
 		icon      : 'fas fa-images',
 		view      : 'text',
 		snippets  : [
+			{
+				name : 'Upload Image',
+				icon : 'fas fa-upload',
+				gen  : ImageUploadGen
+			},
 			{
 				name : 'Image',
 				icon : 'fas fa-image',
