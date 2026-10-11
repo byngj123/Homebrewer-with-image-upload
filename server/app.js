@@ -20,6 +20,7 @@ import api from './homebrew.api.js';
 const { homebrewApi, getBrew, getCSS } = api;
 import adminApi                    from './admin.api.js';
 import vaultApi                    from './vault.api.js';
+import createUploadApi             from './upload.api.js';
 import pageRoutes from './page-routes.js';
 
 import serveCompressedStaticAssets from './static-assets.mv.js';
@@ -54,6 +55,10 @@ export default async function createApp(vite) {
 	};
 
 	app.set('trust proxy', 1 /* number of proxies between user and server */);
+
+	// Mounted ahead of contentNegotiation, which answers 406 to the image-only
+	// Accept header a browser sends for an <img>, and ahead of forceSSL.
+	app.use(createUploadApi({ uploadDir: config.get('hb_uploads') || 'uploads' }));
 
 	if(vite) {
 		app.use(vite.middlewares);
