@@ -82,9 +82,9 @@ New file `server/upload.api.js`, exporting a factory `createUploadApi({ uploadDi
 
 Snippets are synchronous today: `gen` is a string or a function returning a string, and `SnippetGroup.handleSnippetClick` in `client/homebrew/editor/snippetbar/snippetbar.jsx` passes the result straight to `onSnippetClick`.
 
-- `handleSnippetClick` changes to await the result of `execute(snippet.gen, props)` before injecting. A string passes through unchanged, so every existing snippet behaves as before. A falsy result injects nothing.
+- `handleSnippetClick` changes to await the result of `execute(snippet.gen, props)` before injecting. A string passes through unchanged, so every existing snippet behaves as before. A result of `null` or `undefined` injects nothing; an empty string is still passed on, as upstream does.
 - The upload entry's `gen` is an async function in a new file, `themes/V3/Blank/snippets/imageUpload.gen.js`. It opens a file picker (a transient `<input type="file" accept="image/png,image/jpeg,image/gif,image/webp">`), posts the chosen file to `/api/upload/image`, and resolves to the markdown.
-- If the user cancels the picker, it resolves to nothing.
+- If the user cancels the picker, or the upload fails, it resolves to `null`.
 
 ### What gets inserted
 

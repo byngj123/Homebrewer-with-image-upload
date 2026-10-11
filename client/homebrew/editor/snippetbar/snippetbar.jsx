@@ -263,9 +263,10 @@ const SnippetGroup = (props)=>{
 	} = props;
 
 	const handleSnippetClick = async (e, snippet)=>{
-		// A snippet's gen may return its text directly or as a promise
+		// A snippet's gen may return its text directly or as a promise; null or undefined injects nothing
 		const text = await execute(snippet.gen, props);
-		if(text) onSnippetClick(text);
+		if(text == null) return;
+		onSnippetClick(text);
 	};
 	const renderSnippets = (snippets)=>{
 		return _.map(snippets, (snippet)=>{
