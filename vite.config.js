@@ -35,5 +35,8 @@ export default defineConfig({
 		fs   : {
 			allow : ['.'],
 		},
+		watch : {
+			ignored : ['**/uploads/**'],
+		},
 	},
 });
