@@ -39,6 +39,7 @@ Assumed (correct these if wrong):
 ## Running it
 
 - Use upstream's `docker-compose.yml`: one `mongo` container and one app container, port 8000.
+- The compose file publishes the port on `127.0.0.1` only (`127.0.0.1:8000:8000`). This is a deliberate change to an upstream line, made because the upload route has no authentication. It costs reachability: the app cannot be opened from a phone or another computer on the network.
 - Upstream's `Dockerfile` runs `COPY config/docker.json`, but `config/docker.*` is gitignored and the file is not in the repository, so the build fails until it is created. Follow `README.DOCKER.md` for its contents. It stays untracked, as upstream intends.
 - Upstream requires Node 26.4 or newer (`engines` in `package.json`). This Mac has Node 24.14. Docker covers running the app. Tests are run inside a `node:26.4.0-alpine` container with the repository mounted, so no local Node upgrade is needed. Note that `.dockerignore` excludes `tests/`, so the built app image cannot be used to run the full suite.
 
@@ -50,14 +51,15 @@ New file `server/upload.api.js`, exporting a factory `createUploadApi({ uploadDi
 
 - Body: `multipart/form-data` with a single file field named `image`.
 - Parsed with `multer` using memory storage. This is a new dependency: upstream only parses JSON bodies (`bodyParser.json`, 25mb).
-- Size limit: 10 MB, enforced by `multer`'s `limits.fileSize`, so an oversize upload is cut off rather than read in full.
+- Request shape: the request may carry no text fields and at most one file part (`fields: 0`, `files: 1`, `parts: 1` in `multer`'s limits). A request with a text field or a second file is refused with `400` and stores nothing.
+- Size limit: 10 MB, enforced by `multer`'s `limits.fileSize`. Memory use is capped at the limit, but `multer` reads the remainder of an oversize request body before answering `413`, so the connection is held for the length of the body.
 - Type check: by the file's leading bytes, not by its extension or the `Content-Type` the client sent. Accepted: PNG, JPEG, GIF, WebP. The check is a small hand-written signature match in its own module (`server/imageType.js`), which avoids a second new dependency for four formats.
 - SVG is not accepted. An SVG can carry script, and uploads are served from the app's own origin.
-- Stored name: `<random id>.<ext>`, where the id comes from `nanoid` (already an upstream dependency) and the extension comes from the detected type. The original filename is never used on disk, which rules out path traversal and overwrites by construction.
+- Stored name: `<random id>.<ext>`, where the id comes from `nanoid` (already an upstream dependency) and the extension comes from the detected type. The original filename is never used on disk, which rules out path traversal and overwrites by construction. The file is written with the `wx` flag, so an existing name is never overwritten; a collision answers `500`.
 - Storage directory: config key `hb_uploads`, defaulting to `./uploads`, created at start-up if missing. This follows the existing `hb_images` and `hb_fonts` keys in `config/default.json`.
 - Success: `200` with `{ "url": "/uploads/<id>.<ext>" }`.
 - Failures: `400` when no file is sent, `403` for a cross-site request (see below), `413` when over the limit, `415` when the type is not accepted. Each returns `{ "error": "<message>" }`.
-- Cross-site guard: a request carrying a `Sec-Fetch-Site` header with any value other than `same-origin` is refused with `403`. Without this, any web page open in the same browser could post files blind to `localhost:8000` and fill the disk, since a multipart POST needs no CORS preflight. Requests with no such header (curl, tests) are allowed.
+- Cross-site guard: a request carrying a `Sec-Fetch-Site` header with any value other than `same-origin` is refused with `403`. Without this, any web page open in the same browser could post files blind to `localhost:8000` and fill the disk, since a multipart POST needs no CORS preflight. Requests with no such header (curl, tests) are allowed. Browsers send the header only for trustworthy addresses (https, `localhost`, `127.0.0.1`), so at a plain-http address other than localhost the guard lets every request through.
 - The signature check proves only how a file begins. A file with a PNG header and other content after it is stored as `.png`; the `nosniff` header below is what stops a browser treating it as anything but an image.
 
 ### Serving
@@ -132,11 +134,25 @@ After the tests pass, each guard is disabled on its own in turn (the size limit,
 
 ## Limits knowingly accepted
 
-- **No authentication on upload.** Anyone who can reach port 8000 can upload. This is acceptable on localhost and must be revisited before the app is ever exposed to a network.
+- **No authentication on upload.** Anyone who can reach port 8000 can upload. This is acceptable only because the port is bound to localhost. See "Before exposing this to a network".
+- **The insert position is the cursor at finish time.** The image markdown goes in wherever the cursor is when the upload finishes, which may not be where it was when the file was chosen.
+- **The upload route is outside Vite's Host header check.** It is mounted ahead of the other middleware, so DNS rebinding against it is not ruled out.
+- **The client-side upload path has no automated test.** The picker, the request and the insertion are verified by hand only.
 - **Images are tied to this instance.** Copying a brew's text to the public Homebrewery, or to another machine, loses its uploaded images.
 - **No clean-up.** Deleting a brew leaves its images on disk. Nothing tracks which brew uses which image.
 - **The Legacy renderer's menu is unchanged.** Only V3 themes get the entry.
 - **The menu wiring is not covered by automated tests.** The Jest suites cover the endpoint and the type check. The click path through the snippet bar is verified by hand only.
+
+## Before exposing this to a network
+
+Do these first, in this order of concern, and only then remove the `127.0.0.1` port binding:
+
+- Add authentication and a storage quota to the upload route.
+- Make the cross-site guard also compare the `Origin` header with `Host`, and stop it failing open when `Sec-Fetch-Site` is absent.
+- Restore, for the upload paths, what mounting ahead of the other middleware bypasses: Vite's Host validation, upstream's CORS origin allow-list and `forceSSL`.
+- Cap concurrent uploads, or move to disk storage, since memory storage holds each upload whole.
+- Reject on `Content-Length` before reading an oversize body.
+- Decide whether uploaded images should be readable by anyone holding the URL.
 
 ## Out of scope
 

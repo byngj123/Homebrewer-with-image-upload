@@ -84,6 +84,23 @@ describe('upload api', ()=>{
 		expect(await fs.readdir(uploadDir)).toHaveLength(0);
 	});
 
+	it('rejects a request that carries a text field as well as the image, and stores nothing', async ()=>{
+		const res = await upload(PNG).field('note', 'extra').expect(400);
+
+		expect(res.body.error).toBe('The upload could not be read.');
+		expect(await fs.readdir(uploadDir)).toHaveLength(0);
+	});
+
+	it('rejects a request that carries two files, and stores nothing', async ()=>{
+		const res = await request.post('/api/upload/image')
+			.attach('image', PNG, 'a.png')
+			.attach('image', PNG, 'b.png')
+			.expect(400);
+
+		expect(res.body.error).toBe('The upload could not be read.');
+		expect(await fs.readdir(uploadDir)).toHaveLength(0);
+	});
+
 	it('rejects a text file', async ()=>{
 		const res = await upload(Buffer.from('just some text'), 'notes.txt', 'text/plain').expect(415);
 		expect(res.body.error).toBe('Only PNG, JPEG, GIF and WebP images are accepted.');
@@ -145,7 +162,7 @@ describe('upload api', ()=>{
 		await fs.writeFile(path.join(uploadDir, '..', 'hb-outside.txt'), 'secret');
 		try {
 			await request.get('/uploads/..%2Fhb-outside.txt').expect((res)=>{
-				expect(res.status).not.toBe(200);
+				expect(res.status).toBe(404);
 			});
 		} finally {
 			await fs.remove(path.join(uploadDir, '..', 'hb-outside.txt'));

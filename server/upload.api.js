@@ -15,10 +15,11 @@ export default function createUploadApi({ uploadDir }) {
 
 	const receive = multer({
 		storage : multer.memoryStorage(),
-		limits  : { fileSize: MAX_IMAGE_BYTES, files: 1 }
+		limits  : { fileSize: MAX_IMAGE_BYTES, files: 1, fields: 0, parts: 1 }
 	}).single('image');
 
-	// Browsers send Sec-Fetch-Site on every request. Tools such as curl send nothing and are let through.
+	// A request whose Sec-Fetch-Site header is present and is not same-origin is refused.
+	// A request without the header is let through: curl, older browsers, and a browser reaching the app at a plain-http address other than localhost.
 	const sameOriginOnly = (req, res, next)=>{
 		const site = req.get('Sec-Fetch-Site');
 		if(site && site !== 'same-origin') {
@@ -39,7 +40,7 @@ export default function createUploadApi({ uploadDir }) {
 			// The client's filename is never used. The extension comes from the detected type.
 			const name = `${nanoid()}.${type.ext}`;
 			try {
-				await fs.writeFile(path.join(dir, name), req.file.buffer);
+				await fs.writeFile(path.join(dir, name), req.file.buffer, { flag: 'wx' });
 			} catch (writeErr) {
 				console.error(writeErr);
 				return res.status(500).json({ error: 'The image could not be saved.' });
