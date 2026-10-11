@@ -37,7 +37,15 @@ const DEFAULT_BREW_LOAD = _.defaults(
 	},
 	DEFAULT_BREW);
 
+// Starting point for a blank brew on the New page: the general defaults plus an A4 page size.
+// The style is kept out of DEFAULT_BREW, which is also used to fill in saved, loaded and cloned brews.
+const DEFAULT_NEW_BREW = {
+	...DEFAULT_BREW,
+	style : '/* A4 Page Size */\n.page {\n\twidth  : 210mm;\n\theight : 296.8mm;\n}\n\n'
+};
+
 export {
 	DEFAULT_BREW,
-	DEFAULT_BREW_LOAD
+	DEFAULT_BREW_LOAD,
+	DEFAULT_NEW_BREW
 };

@@ -157,3 +157,13 @@ Do these first, in this order of concern, and only then remove the `127.0.0.1` p
 ## Out of scope
 
 Drag and drop into the editor, pasting from the clipboard, an image gallery or manager, resizing or re-encoding images, per-user quotas, and any deployment.
+
+## Later addition: new brews default to A4
+
+Added on 2026-10-11 at James's request, after printing on A4 paper left a white strip at the bottom of each page. Upstream pages are US Letter (215.9mm by 279.4mm) and the print rule sets no paper size, so the browser's A4 default leaves the difference blank.
+
+- A blank brew opened on the New page starts with the "A4 Page Size" style (`.page` at 210mm by 296.8mm) already in its Style tab. It can be deleted there like any other style.
+- The value lives in `DEFAULT_NEW_BREW` in `server/brewDefaults.js`, used only by `client/homebrew/pages/newPage/newPage.jsx`. It is deliberately not in `DEFAULT_BREW`, which also fills in saved, loaded and cloned brews: putting it there would turn every existing brew without a style into A4 when opened.
+- Existing brews, clones of other brews, and the home page are unchanged and stay US Letter.
+- An unsaved draft already held in the browser's local storage with no style of its own picks up the A4 style the next time the New page is opened.
+- `server/brewDefaults.spec.js` covers the default and that `DEFAULT_BREW` and `DEFAULT_BREW_LOAD` carry no style. That the New page uses it is checked by hand only.

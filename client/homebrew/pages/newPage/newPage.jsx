@@ -4,11 +4,11 @@ import React            from 'react';
 import request          from '../../utils/request-middleware.js';
 import _                from 'lodash';
 import EditorPage       from '../basePages/editPage/editorPage.jsx';
-import { DEFAULT_BREW } from '../../../../server/brewDefaults.js';
+import { DEFAULT_NEW_BREW } from '../../../../server/brewDefaults.js';
 
 const NewPage = (props)=>{
 	props = {
-		brew : DEFAULT_BREW,
+		brew : DEFAULT_NEW_BREW,
 		...props
 	};
 
