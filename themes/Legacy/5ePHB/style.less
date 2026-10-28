@@ -177,6 +177,7 @@ body { counter-reset : phb-page-numbers; }
 		border-image        : @noteBorderImage 11;
 		border-image-outset : 9px 0px;
 		box-shadow          : 1px 4px 14px #888888;
+		@media print { box-shadow : none; }
 		p, ul {
 			font-size   : 0.352cm;
 			line-height : 1.083em;
@@ -387,6 +388,7 @@ body { counter-reset : phb-page-numbers; }
 	border-image        : @descriptiveBoxImage 12 stretch;
 	border-image-outset : 4px;
 	box-shadow          : 0px 0px 6px #FAF7EA;
+	@media print { box-shadow : none; }
 	p {
 		display        : block;
 		padding-bottom : 0px;

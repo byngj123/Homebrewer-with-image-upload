@@ -214,6 +214,7 @@
 		border-image-width  : 11px;
 		border-image-outset : 9px 0px;
 		box-shadow          : 1px 4px 14px #888888;
+		@media print { box-shadow : none; }
 		.page :where(&) {
 			margin-top : 9px; //Prevent top border getting cut off on colbreak
 		}
@@ -237,6 +238,7 @@
 		border-image        : @descriptiveBoxImage 12 stretch;
 		border-image-outset : 4px;
 		box-shadow          : 0 0 6px #FAF7EA;
+		@media print { box-shadow : none; }
 		.page :where(&) {
 			margin-top        : 4px; //Prevent top border getting cut off on colbreak
 		}
@@ -312,6 +314,7 @@
 			border-image          : @monsterBorderImage 14 round;
 			border-image-outset   : 0px 2px;
 			box-shadow            : 1px 4px 14px #888888;
+			@media print { box-shadow : none; }
 			background-blend-mode : overlay;
 		}
 
